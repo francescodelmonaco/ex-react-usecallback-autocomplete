@@ -1,5 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+
+// funzione di debounce generica
+function debounce(callback, delay) {
+  let timer; // inizializzato a 0
+  return (value) => {
+    clearTimeout(timer); // azzero nuovamente il timer
+    timer = setTimeout(() => {
+      callback(value);
+    }, delay);
+  };
+};
 
 export default function App() {
   const url = "http://localhost:3333/products";
@@ -8,11 +19,19 @@ export default function App() {
   const [query, setQuery] = useState("");
 
   // chiamata prodotti cercati
-  useEffect(() => {
-    axios.get(`${url}?search=${query}`)
+  const apiCall = async (query) => {
+    await axios.get(`${url}?search=${query}`)
       .then(res => setProducts(res.data))
       .catch(err => console.error(err))
-  }, [query]);
+
+    console.log("Effettuo la chiamata API");
+  };
+
+  const debouncedApiCall = useCallback(debounce(apiCall, 500), []);
+
+  useEffect(() => {
+    debouncedApiCall(query);
+  }, [query])
 
   return (
     <>
